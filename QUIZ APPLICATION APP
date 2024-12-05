@@ -1,0 +1,174 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class QuizApp extends JFrame {
+
+    // Data structures to manage quizzes
+    private Map<String, List<Question>> quizzes = new HashMap<>();
+
+    public QuizApp() {
+        setTitle("Quiz App");
+        setSize(400, 400);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        // Create the main menu panel
+        JPanel mainMenuPanel = new JPanel();
+        mainMenuPanel.setLayout(new GridLayout(4, 1, 10, 10));
+
+        // Buttons for the menu options
+        JButton createQuizButton = new JButton("Create Quiz");
+        JButton playQuizButton = new JButton("Play Quiz");
+        JButton deleteQuizButton = new JButton("Delete Quiz");
+        JButton exitButton = new JButton("Exit");
+
+        // Add actions to buttons
+        createQuizButton.addActionListener(e -> createQuiz());
+        playQuizButton.addActionListener(e -> playQuiz());
+        deleteQuizButton.addActionListener(e -> deleteQuiz());
+        exitButton.addActionListener(e -> System.exit(0));
+
+        // Add buttons to the main menu
+        mainMenuPanel.add(createQuizButton);
+        mainMenuPanel.add(playQuizButton);
+        mainMenuPanel.add(deleteQuizButton);
+        mainMenuPanel.add(exitButton);
+
+        add(mainMenuPanel);
+    }
+
+    // Method to create a quiz
+    private void createQuiz() {
+        String quizName = JOptionPane.showInputDialog(this, "Enter the name of the quiz:");
+        if (quizName == null || quizName.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Quiz name cannot be empty!", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String questionCountStr = JOptionPane.showInputDialog(this, "Enter the number of questions:");
+        int questionCount;
+        try {
+            questionCount = Integer.parseInt(questionCountStr);
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Invalid number of questions!", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        List<Question> questionList = new ArrayList<>();
+        for (int i = 1; i <= questionCount; i++) {
+            String questionText = JOptionPane.showInputDialog(this, "Enter question " + i + ":");
+            List<String> options = new ArrayList<>();
+            for (int j = 1; j <= 4; j++) {
+                String option = JOptionPane.showInputDialog(this, "Enter option " + j + " for question " + i + ":");
+                options.add(option);
+            }
+            String correctOptionStr = JOptionPane.showInputDialog(this, "Enter the correct option (1-4) for question " + i + ":");
+            int correctOption;
+            try {
+                correctOption = Integer.parseInt(correctOptionStr) - 1;
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Invalid correct option!", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            questionList.add(new Question(questionText, options, correctOption));
+        }
+
+        quizzes.put(quizName, questionList);
+        JOptionPane.showMessageDialog(this, "Quiz '" + quizName + "' created successfully!");
+    }
+
+    // Method to play a quiz
+    private void playQuiz() {
+        if (quizzes.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No quizzes available to play!", "Info", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        String[] quizNames = quizzes.keySet().toArray(new String[0]);
+        String selectedQuiz = (String) JOptionPane.showInputDialog(this, "Select a quiz to play:", "Play Quiz",
+                JOptionPane.QUESTION_MESSAGE, null, quizNames, quizNames[0]);
+
+        if (selectedQuiz == null) return;
+
+        List<Question> questionList = quizzes.get(selectedQuiz);
+        int score = 0;
+
+        for (Question question : questionList) {
+            StringBuilder optionsText = new StringBuilder();
+            for (int i = 0; i < question.getOptions().size(); i++) {
+                optionsText.append((i + 1)).append(". ").append(question.getOptions().get(i)).append("\n");
+            }
+
+            String answerStr = JOptionPane.showInputDialog(this,
+                    question.getQuestion() + "\n\n" + optionsText,
+                    "Question",
+                    JOptionPane.QUESTION_MESSAGE);
+
+            int selectedOption;
+            try {
+                selectedOption = Integer.parseInt(answerStr) - 1;
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Invalid answer!", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            if (selectedOption == question.getCorrectOption()) {
+                score++;
+            }
+        }
+
+        JOptionPane.showMessageDialog(this, "You scored " + score + "/" + questionList.size() + " in the quiz '" + selectedQuiz + "'!");
+    }
+
+    // Method to delete a quiz
+    private void deleteQuiz() {
+        if (quizzes.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No quizzes available to delete!", "Info", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        String[] quizNames = quizzes.keySet().toArray(new String[0]);
+        String selectedQuiz = (String) JOptionPane.showInputDialog(this, "Select a quiz to delete:", "Delete Quiz",
+                JOptionPane.QUESTION_MESSAGE, null, quizNames, quizNames[0]);
+
+        if (selectedQuiz == null) return;
+
+        quizzes.remove(selectedQuiz);
+        JOptionPane.showMessageDialog(this, "Quiz '" + selectedQuiz + "' deleted successfully!");
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new QuizApp().setVisible(true));
+    }
+}
+
+// Question class
+class Question {
+    private String question;
+    private List<String> options;
+    private int correctOption;
+
+    public Question(String question, List<String> options, int correctOption) {
+        this.question = question;
+        this.options = options;
+        this.correctOption = correctOption;
+    }
+
+    public String getQuestion() {
+        return question;
+    }
+
+    public List<String> getOptions() {
+        return options;
+    }
+
+    public int getCorrectOption() {
+        return correctOption;
+    }
+}
